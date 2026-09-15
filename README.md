@@ -74,4 +74,3 @@ Outputs usados pelos demais repositorios: nome do cluster EKS, endpoint/porta/no
 
 - [Documentacao arquitetural](https://github.com/kmlyteixeira/garage-management-api-dotnet/tree/main/docs/architecture)
 - [Swagger da API](https://github.com/kmlyteixeira/garage-management-api-dotnet#documentacao-da-api)
-- Video demonstrativo: adicionar URL final do YouTube/Vimeo na entrega.
