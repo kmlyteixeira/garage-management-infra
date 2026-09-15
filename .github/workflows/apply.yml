@@ -1,0 +1,30 @@
+name: Infrastructure Apply
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: GitHub Environment
+        required: true
+        default: homologacao
+        type: choice
+        options: [homologacao, producao]
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_TERRAFORM_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - run: terraform init
+      - run: terraform plan -out=tfplan
+      - run: terraform apply tfplan
