@@ -82,10 +82,23 @@ No repositório, crie o Environment `aws-lab` e configure:
 - Variable `AWS_REGION`: por exemplo `us-east-1`.
 - Variable `TERRAFORM_ENVIRONMENT`: `homologacao` ou `producao`.
 - Variable `TF_STATE_BUCKET`: bucket S3 criado previamente no AWS Academy.
+- Variables `EKS_CLUSTER_ROLE_ARN` e `EKS_NODE_ROLE_ARN`: ARNs das roles
+  existentes fornecidas pelo laboratório para o EKS.
 - Secrets `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` e `AWS_SESSION_TOKEN`.
 
 Os três valores AWS são temporários e devem ser atualizados a cada nova sessão
-do Academy.
+do Academy. O `TF_STATE_BUCKET` deve ser um bucket já existente e acessível;
+o Terraform não tenta criá-lo nem gerenciá-lo.
+
+Para descobrir uma role preexistente do laboratório, tente:
+
+```bash
+aws iam get-role --role-name LabRole --query 'Role.Arn' --output text
+```
+
+Use o ARN retornado nas duas variables `EKS_CLUSTER_ROLE_ARN` e
+`EKS_NODE_ROLE_ARN`, se a role tiver as trust policies e permissões exigidas
+pelo EKS. Se o laboratório fornecer roles diferentes, use os respectivos ARNs.
 
 Para criar o bucket pelo terminal do Academy:
 
@@ -96,6 +109,18 @@ bash scripts/bootstrap-academy-state.sh
 
 Use o nome exibido ao final como `TF_STATE_BUCKET` nos cinco repositórios.
 Reutilize o mesmo bucket nas próximas sessões para preservar os states.
+
+Se você já tiver um bucket disponibilizado pelo laboratório, não tente criá-lo:
+
+```bash
+bash scripts/bootstrap-academy-state.sh nome-do-bucket-existente
+```
+
+Nesse caso, configure `TF_STATE_BUCKET` com esse mesmo nome. A identidade
+temporária precisa ter permissão de leitura e gravação no bucket. O Terraform
+também precisa conseguir usar locking pelo state; se o bucket não permitir
+versionamento ou o lockfile S3, o `terraform init` informará a permissão
+faltante.
 
 Se o arquivo tiver sido transferido a partir do Windows e aparecer `pipefail`
 como opção inválida, normalize as quebras de linha antes de executar:

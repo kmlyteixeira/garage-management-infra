@@ -149,39 +149,9 @@ resource "aws_ssm_parameter" "workload_security_group_ids" {
   tags  = local.common_tags
 }
 
-resource "aws_s3_bucket" "service_state" {
-  bucket_prefix = "${var.project_name}-terraform-state-"
-  force_destroy = false
-  tags          = local.common_tags
-}
-
-resource "aws_s3_bucket_versioning" "service_state" {
-  bucket = aws_s3_bucket.service_state.id
-  versioning_configuration {
-    status = "Enabled"
-  }
-}
-
-resource "aws_s3_bucket_server_side_encryption_configuration" "service_state" {
-  bucket = aws_s3_bucket.service_state.id
-  rule {
-    apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
-    }
-  }
-}
-
-resource "aws_s3_bucket_public_access_block" "service_state" {
-  bucket                  = aws_s3_bucket.service_state.id
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
-
 resource "aws_ssm_parameter" "service_state_bucket" {
   name  = "/${var.project_name}/${var.environment}/platform/service-state-bucket"
   type  = "String"
-  value = aws_s3_bucket.service_state.bucket
+  value = var.service_state_bucket
   tags  = local.common_tags
 }

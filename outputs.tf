@@ -31,5 +31,5 @@ output "platform_parameter_prefix" {
 }
 
 output "service_state_bucket" {
-  value = aws_s3_bucket.service_state.bucket
+  value = var.service_state_bucket
 }
