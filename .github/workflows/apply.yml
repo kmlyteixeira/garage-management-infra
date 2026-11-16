@@ -58,7 +58,7 @@ jobs:
             if aws eks describe-access-entry \
               --cluster-name "$cluster_name" \
               --principal-arn "$admin_role_arn" >/dev/null 2>&1; then
-              terraform import "$access_address" "$cluster_name,$admin_role_arn"
+              terraform import "$access_address" "$cluster_name:$admin_role_arn"
             fi
           fi
       - run: terraform plan -out=tfplan
