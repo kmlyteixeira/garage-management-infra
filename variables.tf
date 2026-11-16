@@ -86,6 +86,12 @@ variable "admin_principal_arn" {
   nullable    = true
 }
 
+variable "enable_eks_admin_access" {
+  description = "Create an EKS access entry and policy association for admin_principal_arn."
+  type        = bool
+  default     = false
+}
+
 variable "auth_lambda_function_arn" {
   description = "ARN of the deployed authentication Lambda."
   type        = string
