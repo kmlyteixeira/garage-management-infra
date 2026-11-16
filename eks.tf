@@ -43,3 +43,33 @@ resource "aws_eks_node_group" "main" {
 
   tags = local.common_tags
 }
+
+resource "aws_eks_access_entry" "admin" {
+  count             = var.enable_eks_admin_access && var.admin_principal_arn != null ? 1 : 0
+  cluster_name      = aws_eks_cluster.main.name
+  principal_arn     = var.admin_principal_arn
+  type              = "STANDARD"
+  kubernetes_groups = ["eks-admins"]
+}
+
+resource "kubernetes_cluster_role_binding_v1" "admin" {
+  count = var.enable_eks_admin_access && var.admin_principal_arn != null ? 1 : 0
+
+  metadata {
+    name = "garage-management-admin"
+  }
+
+  role_ref {
+    api_group = "rbac.authorization.k8s.io"
+    kind      = "ClusterRole"
+    name      = "cluster-admin"
+  }
+
+  subject {
+    kind      = "Group"
+    name      = "eks-admins"
+    api_group = "rbac.authorization.k8s.io"
+  }
+
+  depends_on = [aws_eks_access_entry.admin]
+}
