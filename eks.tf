@@ -37,14 +37,14 @@ resource "aws_eks_node_group" "main" {
 }
 
 resource "aws_eks_access_entry" "admin" {
-  count         = var.admin_principal_arn == null ? 0 : 1
+  count         = var.enable_eks_admin_access && var.admin_principal_arn != null ? 1 : 0
   cluster_name  = aws_eks_cluster.main.name
   principal_arn = var.admin_principal_arn
   type          = "STANDARD"
 }
 
 resource "aws_eks_access_policy_association" "admin" {
-  count         = var.admin_principal_arn == null ? 0 : 1
+  count         = var.enable_eks_admin_access && var.admin_principal_arn != null ? 1 : 0
   cluster_name  = aws_eks_cluster.main.name
   principal_arn = var.admin_principal_arn
   policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
