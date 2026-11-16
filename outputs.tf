@@ -25,3 +25,11 @@ output "eks_cluster_endpoint" {
 output "api_gateway_endpoint" {
   value = try(aws_apigatewayv2_api.main[0].api_endpoint, null)
 }
+
+output "platform_parameter_prefix" {
+  value = "/${var.project_name}/${var.environment}/platform"
+}
+
+output "service_state_bucket" {
+  value = aws_s3_bucket.service_state.bucket
+}

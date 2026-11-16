@@ -120,3 +120,68 @@ resource "aws_security_group" "api" {
   }
   tags = local.common_tags
 }
+
+resource "aws_ssm_parameter" "vpc_id" {
+  name  = "/${var.project_name}/${var.environment}/platform/vpc-id"
+  type  = "String"
+  value = aws_vpc.main.id
+  tags  = local.common_tags
+}
+
+resource "aws_ssm_parameter" "private_subnet_ids" {
+  name  = "/${var.project_name}/${var.environment}/platform/private-subnet-ids"
+  type  = "String"
+  value = jsonencode(aws_subnet.private[*].id)
+  tags  = local.common_tags
+}
+
+resource "aws_ssm_parameter" "cluster_name" {
+  name  = "/${var.project_name}/${var.environment}/platform/cluster-name"
+  type  = "String"
+  value = aws_eks_cluster.main.name
+  tags  = local.common_tags
+}
+
+resource "aws_ssm_parameter" "workload_security_group_ids" {
+  name  = "/${var.project_name}/${var.environment}/platform/workload-security-group-ids"
+  type  = "String"
+  value = jsonencode([aws_security_group.eks_cluster.id])
+  tags  = local.common_tags
+}
+
+resource "aws_s3_bucket" "service_state" {
+  bucket_prefix = "${var.project_name}-terraform-state-"
+  force_destroy = false
+  tags          = local.common_tags
+}
+
+resource "aws_s3_bucket_versioning" "service_state" {
+  bucket = aws_s3_bucket.service_state.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "service_state" {
+  bucket = aws_s3_bucket.service_state.id
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "service_state" {
+  bucket                  = aws_s3_bucket.service_state.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_ssm_parameter" "service_state_bucket" {
+  name  = "/${var.project_name}/${var.environment}/platform/service-state-bucket"
+  type  = "String"
+  value = aws_s3_bucket.service_state.bucket
+  tags  = local.common_tags
+}

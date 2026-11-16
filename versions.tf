@@ -8,13 +8,7 @@ terraform {
     }
   }
 
-  cloud {
-    organization = "15soat-fiap"
-
-    workspaces {
-      name = "garage-management-infra"
-    }
-  }
+  backend "s3" {}
 }
 
 provider "aws" {

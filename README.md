@@ -1,17 +1,27 @@
 # Garage Management Infrastructure
 
-Repositorio Terraform da plataforma AWS, EKS, Kubernetes e API Gateway do Garage Management.
+Repositório da infraestrutura compartilhada da plataforma AWS, EKS, Kubernetes,
+mensageria, bancos auxiliares e observabilidade do Garage Management.
 
 ## Repositorios da solucao
 
-- [API principal e manifests Kubernetes](https://github.com/kmlyteixeira/garage-management-api-dotnet)
+- [Contratos compartilhados](../garage-management-contracts)
+- [OS Service](../garage-management-os-service)
+- [Billing Service](../garage-management-billing-service)
+- [Execution Service](../garage-management-execution-service)
+- [API legada e referência de migração](https://github.com/kmlyteixeira/garage-management-api-dotnet)
 - [Lambda de autenticacao](https://github.com/kmlyteixeira/garage-management-lambda)
 - [Infraestrutura EKS/API Gateway](https://github.com/kmlyteixeira/garage-management-infra)
 - [Infraestrutura RDS PostgreSQL](https://github.com/kmlyteixeira/garage-management-database)
 
 ## Escopo
 
-Este repositorio provisiona VPC, subnets publicas/privadas, NAT, security groups, IAM, EKS, node group, acesso ao cluster, VPC Link, API Gateway HTTP, throttling e integracoes com a Lambda de autenticacao e o Load Balancer interno da API. Os manifests da aplicacao, HPA, Job de migration e ConfigMaps permanecem na [API principal](https://github.com/kmlyteixeira/garage-management-api-dotnet/tree/main/k8s).
+Este repositorio provisiona VPC, subnets publicas/privadas, NAT, security groups, IAM, EKS, node group, acesso ao cluster, VPC Link, API Gateway HTTP, throttling e integracoes com a Lambda de autenticacao e o Load Balancer interno da API. Os manifests compartilhados de namespace, RabbitMQ, MongoDB e observabilidade
+ficam em `k8s/platform`. Cada microsserviço mantém apenas seu próprio
+Deployment/Service no respectivo repositório.
+
+O `api-dotnet` permanece somente como referência legada durante a migração e
+não é dependência de runtime dos microsserviços.
 
 ## Arquitetura
 
@@ -43,10 +53,13 @@ Variaveis principais: `project_name`, `environment`, `region`, `availability_zon
 ## CI/CD
 
 - `terraform.yml`: valida formatacao e configuracao Terraform em Pull Requests.
-- `apply.yml`: executa plan/apply com aprovacao do Environment e credenciais OIDC/segredos do GitHub.
-- Deploy da aplicacao e manifests ocorre no workflow da [API principal](https://github.com/kmlyteixeira/garage-management-api-dotnet/actions).
+- `apply.yml`: executa plan/apply no `master` e aplica `k8s/platform` depois do EKS.
+- O apply publica automaticamente no SSM Parameter Store os IDs da VPC,
+  subnets privadas, cluster EKS, security group dos workloads e o bucket S3
+  versionado dos states dos serviços.
+- O deploy de cada aplicação ocorre no workflow independente do respectivo microsserviço.
 - `main`/`master` protegida, sem commits diretos; merge somente por Pull Request aprovado e checks verdes.
-- `develop` e homologacao; `main` e producao. State remoto HCP Terraform deve ser separado por workspace/ambiente.
+- `master` e a branch de apply do AWS Academy. O state usa S3.
 
 ## Operacao
 
@@ -61,6 +74,39 @@ kubectl get nodes
 ```
 
 Antes do `apply` em producao, configure ao menos duas zonas, `single_nat_gateway=false`, `admin_principal_arn`, state remoto, IAM OIDC e secrets externos. Nunca versionar `.tfvars` com senha, tokens ou ARNs sensiveis.
+
+## GitHub Environment `aws-lab`
+
+No repositório, crie o Environment `aws-lab` e configure:
+
+- Variable `AWS_REGION`: por exemplo `us-east-1`.
+- Variable `TERRAFORM_ENVIRONMENT`: `homologacao` ou `producao`.
+- Variable `TF_STATE_BUCKET`: bucket S3 criado previamente no AWS Academy.
+- Secrets `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` e `AWS_SESSION_TOKEN`.
+
+Os três valores AWS são temporários e devem ser atualizados a cada nova sessão
+do Academy.
+
+Para criar o bucket pelo terminal do Academy:
+
+```bash
+export AWS_REGION=us-east-1
+bash scripts/bootstrap-academy-state.sh
+```
+
+Use o nome exibido ao final como `TF_STATE_BUCKET` nos cinco repositórios.
+Reutilize o mesmo bucket nas próximas sessões para preservar os states.
+
+Se o arquivo tiver sido transferido a partir do Windows e aparecer `pipefail`
+como opção inválida, normalize as quebras de linha antes de executar:
+
+```bash
+sed -i 's/\r$//' scripts/bootstrap-academy-state.sh
+bash scripts/bootstrap-academy-state.sh
+```
+
+Os microsserviços e o repositório de banco usam os parâmetros SSM publicados
+por este apply; não é necessário copiar VPC, subnet ou cluster manualmente.
 
 ## Observabilidade e seguranca
 

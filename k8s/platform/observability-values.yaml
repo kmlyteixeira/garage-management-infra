@@ -1,0 +1,6 @@
+newrelic-infrastructure:
+  privileged: true
+kube-state-metrics:
+  enabled: true
+newrelic-prometheus-agent:
+  enabled: true

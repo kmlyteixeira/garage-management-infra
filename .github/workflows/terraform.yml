@@ -3,14 +3,8 @@ name: Infrastructure Terraform
 on:
   pull_request:
     paths:
-      - "**.tf"
+      - "**/*.tf"
       - ".github/workflows/terraform.yml"
-  push:
-    branches: [main, develop]
-    paths:
-      - "**.tf"
-      - ".github/workflows/terraform.yml"
-
 permissions:
   contents: read
 
@@ -23,17 +17,7 @@ jobs:
       - run: terraform fmt -check -recursive
       - run: terraform init -backend=false
       - run: terraform validate
-
-  plan:
-    if: github.event_name == 'push'
-    needs: validate
-    runs-on: ubuntu-latest
-    environment: ${{ github.ref_name == 'main' && 'production' || 'homologacao' }}
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - uses: actions/checkout@v4
-      - uses: hashicorp/setup-terraform@v3
-      - run: terraform init
-      - run: terraform plan -out=tfplan
+      - name: Validate shared Kubernetes platform
+        run: |
+          sudo snap install kubectl --classic
+          kubectl kustomize k8s/platform
