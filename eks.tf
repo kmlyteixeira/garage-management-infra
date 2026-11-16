@@ -1,6 +1,6 @@
 resource "aws_eks_cluster" "main" {
   name     = "${local.name}-eks"
-  role_arn = aws_iam_role.eks_cluster.arn
+  role_arn = var.eks_cluster_role_arn
   version  = var.eks_version
 
   access_config {
@@ -12,14 +12,13 @@ resource "aws_eks_cluster" "main" {
     security_group_ids = [aws_security_group.eks_cluster.id]
   }
 
-  depends_on = [aws_iam_role_policy_attachment.eks_cluster]
-  tags       = local.common_tags
+  tags = local.common_tags
 }
 
 resource "aws_eks_node_group" "main" {
   cluster_name    = aws_eks_cluster.main.name
   node_group_name = "${local.name}-nodes"
-  node_role_arn   = aws_iam_role.eks_node.arn
+  node_role_arn   = var.eks_node_role_arn
   subnet_ids      = aws_subnet.private[*].id
   instance_types  = [var.node_instance_type]
   disk_size       = 50
@@ -34,11 +33,6 @@ resource "aws_eks_node_group" "main" {
     max_unavailable = 1
   }
 
-  depends_on = [
-    aws_iam_role_policy_attachment.eks_node_worker,
-    aws_iam_role_policy_attachment.eks_node_cni,
-    aws_iam_role_policy_attachment.eks_node_ecr,
-  ]
   tags = local.common_tags
 }
 

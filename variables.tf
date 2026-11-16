@@ -38,6 +38,21 @@ variable "eks_version" {
   default = "1.35"
 }
 
+variable "eks_cluster_role_arn" {
+  description = "Existing IAM role ARN supplied by AWS Academy for the EKS control plane."
+  type        = string
+}
+
+variable "eks_node_role_arn" {
+  description = "Existing IAM role ARN supplied by AWS Academy for the EKS node group."
+  type        = string
+}
+
+variable "service_state_bucket" {
+  description = "Existing S3 bucket used for Terraform states."
+  type        = string
+}
+
 variable "node_instance_type" {
   type    = string
   default = "t3.medium"
