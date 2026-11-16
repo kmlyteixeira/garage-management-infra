@@ -48,6 +48,19 @@ jobs:
           terraform state list | grep -E '^aws_s3_bucket(_versioning|_server_side_encryption_configuration|_public_access_block)?\.service_state$' | while read -r address; do
             terraform state rm "$address"
           done
+      - name: Import existing EKS administrator access entry
+        run: |
+          access_address='aws_eks_access_entry.admin[0]'
+          if ! terraform state show "$access_address" >/dev/null 2>&1; then
+            cluster_name="$(terraform output -raw eks_cluster_name)"
+            caller_arn="$(aws sts get-caller-identity --query Arn --output text)"
+            admin_role_arn="$(echo "$caller_arn" | sed -E 's#arn:aws:sts::([0-9]+):assumed-role/([^/]+)/.*#arn:aws:iam::\1:role/\2#')"
+            if aws eks describe-access-entry \
+              --cluster-name "$cluster_name" \
+              --principal-arn "$admin_role_arn" >/dev/null 2>&1; then
+              terraform import "$access_address" "$cluster_name,$admin_role_arn"
+            fi
+          fi
       - run: terraform plan -out=tfplan
       - run: terraform apply tfplan
       - uses: azure/setup-kubectl@v4
