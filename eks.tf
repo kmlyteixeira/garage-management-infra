@@ -14,6 +14,13 @@ resource "aws_eks_cluster" "main" {
   }
 
   tags = local.common_tags
+
+  lifecycle {
+    prevent_destroy = true
+    ignore_changes = [
+      access_config[0].bootstrap_cluster_creator_admin_permissions
+    ]
+  }
 }
 
 resource "aws_eks_node_group" "main" {
