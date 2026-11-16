@@ -42,6 +42,11 @@ jobs:
           admin_role_arn="$(echo "$caller_arn" | sed -E 's#arn:aws:sts::([0-9]+):assumed-role/([^/]+)/.*#arn:aws:iam::\1:role/\2#')"
           echo "TF_VAR_admin_principal_arn=$admin_role_arn" >> "$GITHUB_ENV"
       - run: terraform init
+      - name: Remove legacy managed state bucket resources
+        run: |
+          terraform state list | grep -E '^aws_s3_bucket(_versioning|_server_side_encryption_configuration|_public_access_block)?\.service_state$' | while read -r address; do
+            terraform state rm "$address"
+          done
       - run: terraform plan -out=tfplan
       - run: terraform apply tfplan
       - uses: azure/setup-kubectl@v4
