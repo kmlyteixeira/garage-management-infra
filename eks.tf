@@ -4,7 +4,8 @@ resource "aws_eks_cluster" "main" {
   version  = var.eks_version
 
   access_config {
-    authentication_mode = "API_AND_CONFIG_MAP"
+    authentication_mode                         = "API_AND_CONFIG_MAP"
+    bootstrap_cluster_creator_admin_permissions = true
   }
 
   vpc_config {
@@ -34,12 +35,4 @@ resource "aws_eks_node_group" "main" {
   }
 
   tags = local.common_tags
-}
-
-resource "aws_eks_access_entry" "admin" {
-  count             = var.enable_eks_admin_access && var.admin_principal_arn != null ? 1 : 0
-  cluster_name      = aws_eks_cluster.main.name
-  principal_arn     = var.admin_principal_arn
-  type              = "STANDARD"
-  kubernetes_groups = ["system:masters"]
 }

@@ -90,10 +90,11 @@ Os três valores AWS são temporários e devem ser atualizados a cada nova sess�
 do Academy. O `TF_STATE_BUCKET` deve ser um bucket já existente e acessível;
 o Terraform não tenta criá-lo nem gerenciá-lo.
 
-O workflow do AWS Academy cria um access entry com o grupo Kubernetes
-`system:masters` para a role temporária do laboratório. Isso evita depender da
-política gerenciada `AmazonEKSClusterAdminPolicy`, que pode não estar disponível
-no Academy.
+O cluster habilita `bootstrap_cluster_creator_admin_permissions`, permitindo
+que a identidade temporária que cria o cluster administre o Kubernetes. O
+workflow não cria Access Entry adicional, pois o AWS Academy rejeita grupos
+que começam com `system:` e pode não disponibilizar a política gerenciada
+`AmazonEKSClusterAdminPolicy`.
 
 Para descobrir uma role preexistente do laboratório, tente:
 
