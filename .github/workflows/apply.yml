@@ -66,9 +66,24 @@ jobs:
               terraform import "$access_address" "$cluster_name:$admin_role_arn"
             fi
           fi
-      - run: terraform plan -out=tfplan
-      - run: terraform apply tfplan
       - uses: azure/setup-kubectl@v4
+      - name: Bootstrap EKS before Kubernetes provider operations
+        run: |
+          set -euo pipefail
+          terraform apply -auto-approve \
+            -target=aws_eks_cluster.main \
+            -target=aws_eks_node_group.main
+          cluster_name="$(terraform output -raw eks_cluster_name)"
+          aws eks wait cluster-active \
+            --cluster-name "$cluster_name" \
+            --region "$TF_VAR_region"
+          aws eks update-kubeconfig \
+            --name "$cluster_name" \
+            --region "$TF_VAR_region"
+          kubectl cluster-info
+      - name: Plan infrastructure and Kubernetes resources
+        run: terraform plan -out=tfplan
+      - run: terraform apply tfplan
       - name: Wait for EKS nodes
         run: |
           set -euo pipefail
