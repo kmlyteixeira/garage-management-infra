@@ -74,6 +74,12 @@ jobs:
           set -euo pipefail
           cluster_name="$(terraform output -raw eks_cluster_name)"
           node_group_name="$(terraform output -raw eks_node_group_name)"
+          aws eks describe-nodegroup \
+            --cluster-name "$cluster_name" \
+            --nodegroup-name "$node_group_name" \
+            --region "$TF_VAR_region" \
+            --query 'nodegroup.{status:status,desired:scalingConfig.desiredSize,min:scalingConfig.minSize,max:scalingConfig.maxSize,health:health,subnets:subnets}' \
+            --output yaml
           aws eks wait nodegroup-active \
             --cluster-name "$cluster_name" \
             --nodegroup-name "$node_group_name"

@@ -29,7 +29,11 @@ resource "aws_subnet" "public" {
   cidr_block              = cidrsubnet(var.vpc_cidr, 4, count.index)
   availability_zone       = var.availability_zones[count.index]
   map_public_ip_on_launch = true
-  tags                    = merge(local.common_tags, { Tier = "public" })
+  tags = merge(local.common_tags, {
+    Tier                                      = "public"
+    "kubernetes.io/role/elb"                  = "1"
+    "kubernetes.io/cluster/${local.name}-eks" = "shared"
+  })
 }
 
 resource "aws_subnet" "private" {
@@ -37,7 +41,11 @@ resource "aws_subnet" "private" {
   vpc_id            = aws_vpc.main.id
   cidr_block        = cidrsubnet(var.vpc_cidr, 4, count.index + 8)
   availability_zone = var.availability_zones[count.index]
-  tags              = merge(local.common_tags, { Tier = "private" })
+  tags = merge(local.common_tags, {
+    Tier                                      = "private"
+    "kubernetes.io/role/internal-elb"         = "1"
+    "kubernetes.io/cluster/${local.name}-eks" = "shared"
+  })
 }
 
 resource "aws_route_table" "public" {
