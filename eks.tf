@@ -29,6 +29,8 @@ resource "aws_eks_node_group" "main" {
   node_role_arn   = var.eks_node_role_arn
   subnet_ids      = aws_subnet.private[*].id
   instance_types  = [var.node_instance_type]
+  capacity_type   = "ON_DEMAND"
+  ami_type        = "AL2023_x86_64_STANDARD"
   disk_size       = 50
 
   scaling_config {
@@ -42,6 +44,11 @@ resource "aws_eks_node_group" "main" {
   }
 
   tags = local.common_tags
+
+  depends_on = [
+    aws_nat_gateway.main,
+    aws_route_table_association.private
+  ]
 }
 
 resource "aws_eks_access_entry" "admin" {
